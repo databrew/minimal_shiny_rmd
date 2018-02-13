@@ -1,0 +1,83 @@
+---
+params:
+  n: 5# plotting data
+title: "This is a pdf report"
+fig_height: 2.6
+fig_width: 4
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+# output: 
+#   pdf_document:
+#     latex_engine: xelatex
+#     template: pdf/layout.tex
+#     includes:
+#       in_header: pdf/preamble.sty
+library(knitr)# Basic knitr options
+opts_chunk$set(comment = NA, 
+               echo = FALSE, 
+               warning = FALSE, 
+               message = FALSE, 
+               error = TRUE, 
+               cache = F,
+               fig.height = 6)
+knit_engines$set(asis = function(options) {
+  if (options$echo && options$eval) knit_child(text = options$code)
+})
+
+n <- params$n
+n <- as.numeric(n)
+message('N is ', n)
+```
+
+
+## Your chart
+
+```{r}
+barplot((1:n)^2,
+              col = rainbow(n),
+              border = NA)
+```
+
+## Your other chart
+
+```{r}
+plot(1:n, (1:n)^2,
+             col = adjustcolor(rainbow(n),alpha.f = 0.5),
+          cex = ((1:n) / 10)^2,
+          pch = 16)
+```
+
+## Some code written in a child doc
+
+```{r}
+tab_names <- c('Soren', 'Joe', 'Oleksiy')
+chunks <- rep(NA, length(tab_names))
+for (i in 1:length(tab_names)){
+  title <- tab_names[i]
+  chunks[i] <- paste0('### ', title, '\n\n```{r, fig.height = 6, fig.width = 7}\n',
+         'barplot(1:5, main = "', title, '")\n```\n\n')
+}
+chunks <- paste0(chunks, collapse = '')
+```
+
+```{r}
+# Write our order / child-calls to a doc
+file_connection <- file('children.Rmd')
+writeLines(paste0('---\noutput: pdf_document\n---\n\n', 
+                  chunks), 
+           file_connection)
+close(file_connection)
+```
+
+```{r child='children.Rmd', echo = FALSE}
+# Now, we simply include "children.Rmd" to construct our doc
+# (ie, children is the child doc, and each section is a grandchild)
+```
+
+```{r, results='hide'}
+# Having already called the auto-generated children.Rmd, we can delete it
+file.remove('children.Rmd')
+```
+
